@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class AddTaskScreen extends StatefulWidget {
   @override
@@ -24,19 +25,22 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
-  void _saveTask() async {
-    if (_titleController.text.isEmpty || _selectedDate == null) return;
+  void _saveTask() {
+    if (_titleController.text.isEmpty || _selectedDate == null) {
+      return;
+    }
 
-    // Add task to Firestore
-    final docRef = await FirebaseFirestore.instance.collection('tasks').add({
-      'title': _titleController.text.trim(),
-      'description': _descController.text.trim(),
-      'dueDate': _selectedDate,
-      'isCompleted': false,
+    // Save task to Firestore
+    FirebaseFirestore.instance.collection('tasks').add({
+      'title': _titleController.text,
+      'description': _descController.text,
+      'dueDate': DateFormat('MMMM dd, yyyy').format(_selectedDate!),
+      'completed': false,
+    }).then((_) {
+      print("Task added successfully!");
+    }).catchError((error) {
+      print("Error adding task: $error");
     });
-
-    // Store document ID inside the document
-    await docRef.update({'id': docRef.id});
 
     Navigator.pop(context); // Close screen
   }
@@ -63,7 +67,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               children: [
                 Text(_selectedDate == null
                     ? "Pick a Due Date"
-                    : "Due Date: ${_selectedDate!.toLocal().toString().split(' ')[0]}"),
+                    : "Due Date: ${DateFormat('MMMM dd, yyyy').format(_selectedDate!)}"),
                 ElevatedButton(onPressed: _pickDate, child: Text("Select Date"))
               ],
             ),
